@@ -4,7 +4,6 @@ const Intern = require("./lib/Intern");
 const inquirer = require("inquirer");
 const path = require("path");
 const fs = require("fs");
-//const util = require('util');
 
 const OUTPUT_DIR = path.resolve(__dirname, "output");
 const outputPath = path.join(OUTPUT_DIR, "team.html");
@@ -12,8 +11,17 @@ const outputPath = path.join(OUTPUT_DIR, "team.html");
 const render = require("./src/page-template.js");
 const { truncate } = require("fs/promises");
 
+
 // write html file
-//const writeFileAsync = util.promisify(fs.writeFile);
+const writeFile = (data) => {
+    // check if the output directory exist, otherwise create it.
+    if (!fs.existsSync(OUTPUT_DIR )) {
+        fs.mkdirSync(OUTPUT_DIR)
+        console.log(OUTPUT_DIR, "created!")
+    }
+    //write data to file
+    fs.writeFileSync(outputPath, data, "utf-8");
+}
 
 
 // function to generate questions about development team
@@ -35,9 +43,9 @@ const questionData = (role="manager") => {
     return questionArray
 }
 
-// gather information about the development team members, and render the HTML file.
+
 // function to generate user prompts
-const promptUser = (role="manager") => {
+const getMember = (role="manager") => {
     const questionArray = [];
     const questions = questionData(role);
     
@@ -64,45 +72,36 @@ const promptUser = (role="manager") => {
 }
 
 
-// function to initialize program
-const init = async () => {
+// gather information about the development team members, and render the HTML file.
+const createTeam = async () => {
     // empty team array to collect all the team members
     const team = [];
 
     try {
         // promt for the manager
-        let answers = await promptUser();
+        let answers = await getMember();
         team.push(new Manager(answers.name, answers.id, answers.email, answers.info));
         // prompt for further team members
         while (answers.nextTask !==  "Finish building the team") {
 
             if (answers.nextTask === "Add an engineer") {
-                answers = await promptUser("engineer");
+                answers = await getMember("engineer");
                 team.push(new Engineer(answers.name, answers.id, answers.email, answers.info));
             } else if (answers.nextTask === "Add an intern") {
-                answers = await promptUser("intern");
+                answers = await getMember("intern");
                 team.push(new Intern(answers.name, answers.id, answers.email, answers.info));
             }
         }
-        // render the html code with all the team members
-        const html = render(team);
-        console.log(html)
-
-        // check if the output directory exist, otherwise create it.
-        if (!fs.existsSync(OUTPUT_DIR )) {
-            fs.mkdirSync(OUTPUT_DIR)
-            console.log(OUTPUT_DIR, "created!")
-        }
-        fs.writeFileSync(outputPath, html, "utf-8");
-
-        console.log('Successfully wrote the team.html');
+        // render html and save it to file
+        writeFile(render(team));
+        console.log(`Successfully wrote ${outputPath}`);
     } catch (err) {
         console.log(err);
     }
 };
     
 
-// function call to initialize program
-init();
+// function call to create the team html page
+createTeam();
 
 
