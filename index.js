@@ -4,11 +4,16 @@ const Intern = require("./lib/Intern");
 const inquirer = require("inquirer");
 const path = require("path");
 const fs = require("fs");
+const util = require('util');
 
 const OUTPUT_DIR = path.resolve(__dirname, "output");
 const outputPath = path.join(OUTPUT_DIR, "team.html");
 
 const render = require("./src/page-template.js");
+
+// write html file
+const writeFileAsync = util.promisify(fs.writeFile);
+
 
 // function to generate questions about development team
 const questionData = (role="manager") => {
@@ -54,29 +59,39 @@ const promptUser = (role="manager") => {
 
 // function to initialize program
 const init = async () => {
-    // empty employee array to collect all the employees
-    const employees = [];
+    // empty team array to collect all the team members
+    const team = [];
 
     try {
         // promt for the manager
         let answers = await promptUser();
-        employees.push(new Manager(answers.name, answers.id, answers.email, answers.info));
-        // prompt for further employees
+        team.push(new Manager(answers.name, answers.id, answers.email, answers.info));
+        // prompt for further team members
         while (answers.nextTask !==  "Finish building the team") {
 
             if (answers.nextTask === "Add an engineer") {
                 answers = await promptUser("engineer");
-                employees.push(new Engineer(answers.name, answers.id, answers.email, answers.info));
+                team.push(new Engineer(answers.name, answers.id, answers.email, answers.info));
             } else if (answers.nextTask === "Add an intern") {
                 answers = await promptUser("intern");
-                employees.push(new Intern(answers.name, answers.id, answers.email, answers.info));
+                team.push(new Intern(answers.name, answers.id, answers.email, answers.info));
             }
         }
         // render the html code with all the team members
-        const html = render(employees);
+        const html = render(team);
         console.log(html)
   
-        //await writeFileAsync('index.html', html);
+        // check if 
+        // https://www.golinuxcloud.com/node-js-check-if-file-or-directory-exists/
+        fs.access(OUTPUT_DIR, err => {
+            if (err && err.code === 'ENOENT') {
+               fs.mkdirSync(OUTPUT_DIR)
+               console.log(OUTPUT_DIR, "created successfully... ")
+            }   
+        });
+
+        await writeFileAsync(outputPath, html);
+        //await fs.writeFile(outputPath, html);
     
         console.log('Successfully wrote to index.html');
     } catch (err) {
