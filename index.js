@@ -9,14 +9,32 @@ const OUTPUT_DIR = path.resolve(__dirname, "output");
 const outputPath = path.join(OUTPUT_DIR, "team.html");
 
 const render = require("./src/page-template.js");
+/*
+// function to generate questions about development team
+const questions = (role="manager") => {
+    // role based fields 
+    const infoObj = {
+        "manager": "Office Number",
+        "engineer": "GitHub username",
+        "intern": "School",
+    }
+    // array of questions for user
+    const questionArray = [
+        [`What is the name of the ${role}?`, "name", "input"],
+        [`What is the employee ID of the ${role}?`, "id"],
+        [`What is the email adress of the ${role}?`, "email"],
+        [`What is the ${infoObj[role]}  of the ${role}?`, "info"],
+        ["What do you would you like to do next?", "nextTask", "list", ["Add an engineer", "Add an intern", new inquirer.Separator(), "Finish building the team"]],
+    ];
 
-
-
+    return questionArray
+} */
 
 // gather information about the development team members, and render the HTML file.
 // function to generate user prompts
 const promptUser = (role="manager") => {
     const questionArray = [];
+    // role based fields 
     const infoObj = {
         "manager": "Office Number",
         "engineer": "GitHub username",
@@ -44,18 +62,39 @@ const promptUser = (role="manager") => {
         }
         questionArray.push(questionObject);
     }
-    return questionArray
+    return inquirer.prompt(questionArray);
 }
 
 
 // function to initialize program
-const init = () => {
-    // ask questions
-    inquirer.prompt(promptUser())
-        .then((data) => {
-            console.log(data)
-    }); 
+const init = async () => {
+    // empty employee array to collect all the employees
+    const employees = [];
 
+    try {
+        let answers = await promptUser();
+        employees.push(new Manager(answers.name, answers.id, answers.email, answers.info));
+       
+        while (answers.nextTask !==  "Finish building the team") {
+
+            if (answers.nextTask === "Add an engineer") {
+                answers = await promptUser("engineer");
+                employees.push(new Engineer(answers.name, answers.id, answers.email, answers.info));
+            } else if (answers.nextTask === "Add an intern") {
+                answers = await promptUser("intern");
+                employees.push(new Intern(answers.name, answers.id, answers.email, answers.info));
+            }
+        }
+        // render the html code with all the team members
+        const html = render(employees);
+        console.log(html)
+  
+        //await writeFileAsync('index.html', html);
+    
+        console.log('Successfully wrote to index.html');
+    } catch (err) {
+        console.log(err);
+    }
 };
     
 
