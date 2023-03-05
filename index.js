@@ -4,15 +4,16 @@ const Intern = require("./lib/Intern");
 const inquirer = require("inquirer");
 const path = require("path");
 const fs = require("fs");
-const util = require('util');
+//const util = require('util');
 
 const OUTPUT_DIR = path.resolve(__dirname, "output");
 const outputPath = path.join(OUTPUT_DIR, "team.html");
 
 const render = require("./src/page-template.js");
+const { truncate } = require("fs/promises");
 
 // write html file
-const writeFileAsync = util.promisify(fs.writeFile);
+//const writeFileAsync = util.promisify(fs.writeFile);
 
 
 // function to generate questions about development team
@@ -46,6 +47,12 @@ const promptUser = (role="manager") => {
             type: question[2],
             name: question[1],
             message: question[0],
+            validate: answer => {
+                if (answer.trim() !== "") {
+                    return true
+                }
+                return "Please enter at least one character!"
+            }
         }
         // add a choices field for checkboxes or lists
         if (question[2] === "checkbox" || question[2] === "list") {
@@ -80,20 +87,15 @@ const init = async () => {
         // render the html code with all the team members
         const html = render(team);
         console.log(html)
-  
-        // check if 
-        // https://www.golinuxcloud.com/node-js-check-if-file-or-directory-exists/
-        fs.access(OUTPUT_DIR, err => {
-            if (err && err.code === 'ENOENT') {
-               fs.mkdirSync(OUTPUT_DIR)
-               console.log(OUTPUT_DIR, "created successfully... ")
-            }   
-        });
 
-        await writeFileAsync(outputPath, html);
-        //await fs.writeFile(outputPath, html);
-    
-        console.log('Successfully wrote to index.html');
+        // check if the output directory exist, otherwise create it.
+        if (!fs.existsSync(OUTPUT_DIR )) {
+            fs.mkdirSync(OUTPUT_DIR)
+            console.log(OUTPUT_DIR, "created!")
+        }
+        fs.writeFileSync(outputPath, html, "utf-8");
+
+        console.log('Successfully wrote the team.html');
     } catch (err) {
         console.log(err);
     }
