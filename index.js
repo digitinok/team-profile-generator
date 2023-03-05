@@ -9,9 +9,9 @@ const OUTPUT_DIR = path.resolve(__dirname, "output");
 const outputPath = path.join(OUTPUT_DIR, "team.html");
 
 const render = require("./src/page-template.js");
-/*
+
 // function to generate questions about development team
-const questions = (role="manager") => {
+const questionData = (role="manager") => {
     // role based fields 
     const infoObj = {
         "manager": "Office Number",
@@ -26,28 +26,14 @@ const questions = (role="manager") => {
         [`What is the ${infoObj[role]}  of the ${role}?`, "info"],
         ["What do you would you like to do next?", "nextTask", "list", ["Add an engineer", "Add an intern", new inquirer.Separator(), "Finish building the team"]],
     ];
-
     return questionArray
-} */
+}
 
 // gather information about the development team members, and render the HTML file.
 // function to generate user prompts
 const promptUser = (role="manager") => {
     const questionArray = [];
-    // role based fields 
-    const infoObj = {
-        "manager": "Office Number",
-        "engineer": "GitHub username",
-        "intern": "School",
-    }
-    // array of questions for user
-    const questions = [
-        [`What is the name of the ${role}?`, "name", "input"],
-        [`What is the employee ID of the ${role}?`, "id"],
-        [`What is the email adress of the ${role}?`, "email"],
-        [`What is the ${infoObj[role]}  of the ${role}?`, "info"],
-        ["What do you would you like to do next?", "nextTask", "list"],
-    ];
+    const questions = questionData(role);
     
     for (let question of questions) {
         // create an array of objects with the questions
@@ -58,7 +44,7 @@ const promptUser = (role="manager") => {
         }
         // add a choices field for checkboxes or lists
         if (question[2] === "checkbox" || question[2] === "list") {
-            questionObject.choices = ["Add an engineer", "Add an intern", new inquirer.Separator(), "Finish building the team"];
+            questionObject.choices = question[3];
         }
         questionArray.push(questionObject);
     }
@@ -72,9 +58,10 @@ const init = async () => {
     const employees = [];
 
     try {
+        // promt for the manager
         let answers = await promptUser();
         employees.push(new Manager(answers.name, answers.id, answers.email, answers.info));
-       
+        // prompt for further employees
         while (answers.nextTask !==  "Finish building the team") {
 
             if (answers.nextTask === "Add an engineer") {
